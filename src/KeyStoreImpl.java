@@ -91,43 +91,8 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
     // System.out.println("Is get called here...");
 
     // evaluate statement for next steps
-    if (command.equals("get")) {
-
-      // System.out.println("Is get called here...");
-
-      // check if we have that key in our keystore
-      if (!keystore.containsKey(key)) {
-        return ("The key you entered does not exist!");
-      } else {
-        return ("{" + keystore.get(key) + "}");
-      }
-
-    } else if (command.equals("put") || command.equals("delete")) {
-      // System.out.println("In put or delete");
-
-      // if delete, check if we have to do anything at all
-      if (command.equals("delete") && !keystore.containsKey(key)) {
-        return ("The key you entered does not exist!");
-      }
-
-      // if we get here, all should be good, so lets try to make the 2 stage commit.
-      System.out.println(date.format(new Date()) + ": begin_commit");
-      messageAll("prepare");
-    } else if (command.equals("list")) {
-      // System.out.println("In list Function" + command.equals("list"));
+    if (command.equals("list")) {
       String ret = "";
-
-      // File f=null;
-      // Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
-      // //System.out.println("Temporary directory created successfully!");
-      // String dirPath = tempDirectory.toString();
-      // System.out.println(dirPath);
-      // f = File.createTempFile(key, ".txt", new
-      // File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
-      // System.out.println("Temporary file created successfully!");
-
-      // File f = new File(tmpCustomPrefix + "/" + key);
-
       String homeDir = System.getProperty("user.home");
 
       File f = new File(homeDir + "/" + key);
@@ -137,53 +102,13 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
         ret += fileList[i] + "\n";
       }
 
-      /*
-       * File file = new File("/Users"); String[] fileList = file.list(); String
-       * ret=""; for(String name:fileList){ ret+=name; }
-       */
-
       return ret;
 
     } else if (command.equals("upload") || command.equals("remove")) {
       System.out.println(date.format(new Date()) + ": begin_commit");
       messageAll("prepare");
     } else if (command.equals("read")) {
-      // if (!keystore.containsKey(key)) {
-      // return ("The key you entered does not exist!");
-      // } else {
-      // return ("{" + keystore.get(key) + "}");
-      try {
-
-        // File myObj=null;
-        // Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
-        // //System.out.println("Temporary directory created successfully!");
-        // String dirPath = tempDirectory.toString();
-        // System.out.println(dirPath);
-        // myObj = File.createTempFile(key, ".txt", new
-        // File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
-
-        // File myObj = new File(tmpCustomPrefix + "/" + key);
-
-        String homeDir = System.getProperty("user.home");
-
-        File myObj = new File(homeDir + "/" + key);
-
-        Scanner myReader = new Scanner(myObj);
-        String data = "";
-        // System.out.println("What is data");
-        while (myReader.hasNextLine()) {
-          data = myReader.nextLine();
-          System.out.println(data);
-        }
-        myReader.close();
-        return data;
-      } catch (FileNotFoundException e) {
-        System.out.println("An error occurred.");
-        e.printStackTrace();
-      }
-
-      // }
-
+      return readFile(key);
     } else {
       return ("Invalid operation. Try again.");
     }
@@ -275,7 +200,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
    * @param value value string for the keystore
    * @throws RemoteException if anything happens when trying to execute rpc
    */
-  public void commit(int port, String cmd, String key, String value) {
+  public void commit(int port, String cmd, String fileName, String contents) {
     KeyStore access = null;
     try {
       access = (KeyStore) Naming.lookup("rmi://localhost:" + port + "/keystore" + port);
@@ -283,30 +208,19 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
     }
 
-    System.out.println("TESTINGGGGGGGGG " + cmd.toLowerCase().equals("remove"));
-
     if (port == promisedHost && commit || ready) {
       if (cmd.toLowerCase().equals("upload")) {
-        try {
-          String homeDir = System.getProperty("user.home");
-          File f = new File(homeDir + "/" + key);
-          FileWriter fileWriter = new FileWriter(f);
-          PrintWriter printWriter = new PrintWriter(fileWriter);
+        // try to write to a file locally
+        String writeStatus = writeFile(fileName, contents);
 
-          printWriter.println(value);
-          printWriter.close();
-
-          // reply with ack to let the controling server know we finished our commit
-          // successfully
-          if (ready) {
-            try {
-              access.reply("ack");
-            } catch (Exception e) {
-              System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
-            }
+        // reply with ack to let the controling server know we finished our commit
+        // successfully
+        if (ready) {
+          try {
+            access.reply("ack");
+          } catch (Exception e) {
+            System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
           }
-        } catch (IOException e) {
-          System.out.println(date.format(new Date()) + "Had an IOException: " + e);
         }
       } else if (cmd.toLowerCase().equals("remove")) {
         try {
@@ -374,7 +288,41 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   }
 
   private String writeFile(String fileName, String contents) {
-    return "write successful";
+    String res = "write failed";
+    try {
+      String homeDir = System.getProperty("user.home");
+      File f = new File(homeDir + "/" + key);
+      FileWriter fileWriter = new FileWriter(f);
+      PrintWriter printWriter = new PrintWriter(fileWriter);
+
+      printWriter.println(value);
+      printWriter.close();
+      res = "write successful";
+    } catch (IOException e) {
+      System.out.println(date.format(new Date()) + "IOException: " + e);
+    }
+    return res;
+  }
+
+  private String readFile(String fileName) {
+    String data = "error reading file";
+    try {
+      String homeDir = System.getProperty("user.home");
+
+      File myObj = new File(homeDir + "/" + fileName);
+
+      Scanner myReader = new Scanner(myObj);
+      // System.out.println("What is data");
+      while (myReader.hasNextLine()) {
+        data = myReader.nextLine();
+        System.out.println(data);
+      }
+      myReader.close();
+    } catch (FileNotFoundException e) {
+      System.out.println("An error occurred.");
+      e.printStackTrace();
+    }
+    return data;
   }
 
   /**

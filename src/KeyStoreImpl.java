@@ -1,3 +1,4 @@
+import java.io.File;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -85,6 +86,16 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       // if we get here, all should be good, so lets try to make the 2 stage commit.
       System.out.println(date.format(new Date()) + ": begin_commit");
       messageAll("prepare");
+    } else if (command.equals("list")) {
+      System.out.println("List out some stuff...");
+      File f = new File("./");
+      String[] fileList = f.list();
+      String ret = "";
+      for (int i = 0; i < fileList.length; i++) {
+        System.out.println("list: " + fileList[i]);
+        ret += fileList[i] + "\n";
+      }
+      return ret;
     } else {
       return ("Invalid operation. Try again.");
     }

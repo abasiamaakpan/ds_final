@@ -127,7 +127,7 @@ public class PaxosClient {
 
     try {
       // command loop with initial info prompt
-      System.out.println("Commands (put <key> <value>, get <key>, delete <key>)");
+      System.out.println("Commands (put <fileName> <fileContents>, get <fileName>, list, delete <key>)");
       while (true) {
         // user prompt
         System.out.print("Enter command:");
@@ -150,6 +150,8 @@ public class PaxosClient {
           } else {
             System.out.println(res);
           }
+        } else if (myArray.length == 1 && myArray[0].toLowerCase().equals("list")) {
+          res = tryRmi(0, "list");
         } else {
           System.out.println("Command invalid. Usage: (put <key> <value>, get <key>, delete <key>)");
           continue;

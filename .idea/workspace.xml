@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="503f58b5-ff32-4c76-be4e-8cf4d98c122a" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/KeyStoreImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/KeyStoreImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/PaxosClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PaxosClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/PaxosServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PaxosServer.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -26,22 +25,26 @@
         <counts>
           <entry key="class" value="3" />
           <entry key="java" value="4" />
+          <entry key="md" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="CLASS" value="3" />
           <entry key="JAVA" value="4" />
+          <entry key="Markdown" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="java" value="598" />
+          <entry key="java" value="1079" />
+          <entry key="md" value="4" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="JAVA" value="598" />
+          <entry key="JAVA" value="1079" />
+          <entry key="Markdown" value="4" />
         </counts>
       </usages-collector>
     </session>
@@ -66,18 +69,6 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/PaxosClient.class">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="30">
-              <caret line="2" column="16" selection-start-line="2" selection-start-column="16" selection-end-line="2" selection-end-column="16" />
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/PaxosServer.class">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="90">
@@ -86,14 +77,38 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/KeyStoreImpl.java">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/PaxosClient.class">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="312">
-              <caret line="203" column="5" selection-start-line="203" selection-start-column="5" selection-end-line="203" selection-end-column="5" />
+            <state relative-caret-position="-1770">
+              <caret line="2" column="16" selection-start-line="2" selection-start-column="16" selection-end-line="2" selection-end-column="16" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/KeyStoreImpl.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1181">
+              <caret line="161" selection-start-line="161" selection-end-line="168" selection-end-column="63" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/README.md">
+          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+            <state split_layout="SPLIT">
+              <first_editor relative-caret-position="420">
+                <caret line="28" lean-forward="true" selection-start-line="28" selection-end-line="28" />
+              </first_editor>
+              <second_editor />
             </state>
           </provider>
         </entry>
@@ -126,9 +141,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>commit recorded</find>
-      <find>Users</find>
-      <find>Desktop</find>
       <find>get</find>
       <find>writer</find>
       <find>write</find>
@@ -139,10 +151,26 @@
       <find>invalid</find>
       <find>Invalid</find>
       <find>delete</find>
-      <find>File</find>
       <find>remove</find>
       <find>Something</find>
       <find>FileNotFound</find>
+      <find>$USER_HOME$/Desktop/</find>
+      <find>~/</find>
+      <find>logs</find>
+      <find>customDirPrefix</find>
+      <find>createTempDirectory</find>
+      <find>File</find>
+      <find>&quot;&quot;</find>
+      <find>.txt</find>
+      <find>folder</find>
+      <find>.tmp</find>
+      <find>rootDirectory</find>
+      <find>tmpCustomPrefix</find>
+      <find>myObj</find>
+      <find>dirPath</find>
+      <find>tempDirec</find>
+      <find>new File</find>
+      <find>Path tempDirectory = Files.createTempDirectory(rootDirectory, &quot;&quot;);</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -161,12 +189,13 @@
       <list>
         <option value="$PROJECT_DIR$/src/PaxosServer.java" />
         <option value="$PROJECT_DIR$/src/PaxosClient.java" />
+        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/src/KeyStoreImpl.java" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="519" />
+    <option name="x" value="538" />
     <option name="y" value="24" />
     <option name="width" value="1143" />
     <option name="height" value="989" />
@@ -201,7 +230,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1587632945991" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1587639439040" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RunDashboard">
@@ -230,7 +259,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="519" y="24" width="1143" height="989" extended-state="0" />
+    <frame x="538" y="24" width="1143" height="989" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24795641" />
@@ -288,23 +317,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/PaxosServer.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="10" column="5" selection-start-line="10" selection-start-column="5" selection-end-line="10" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/PaxosClient.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="16" selection-start-line="2" selection-start-column="16" selection-end-line="2" selection-end-column="16" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/PaxosClient.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="265">
@@ -315,10 +327,37 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="420">
+            <caret line="28" lean-forward="true" selection-start-line="28" selection-end-line="28" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/PaxosServer.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="10" column="5" selection-start-line="10" selection-start-column="5" selection-end-line="10" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/PaxosClient.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1770">
+          <caret line="2" column="16" selection-start-line="2" selection-start-column="16" selection-end-line="2" selection-end-column="16" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/KeyStoreImpl.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="312">
-          <caret line="203" column="5" selection-start-line="203" selection-start-column="5" selection-end-line="203" selection-end-column="5" />
+        <state relative-caret-position="1181">
+          <caret line="161" selection-start-line="161" selection-end-line="168" selection-end-column="63" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>

@@ -13,6 +13,10 @@ import java.util.Map;
 import java.util.Scanner;
 import java.io.BufferedWriter;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.FileSystems;
+
 
 /**
  * KeyStoreImpl is the main implementation class for all of the server
@@ -40,6 +44,9 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   Date prepDate;
   int promisedHost;
 
+  private static Path rootDirectory = FileSystems.getDefault().getPath("~");
+
+
   /**
    * Constructor taking in an array of server ports
    *
@@ -60,7 +67,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
    */
   public String clientRequest(String message){
       System.out.println("From Impl file " + message);
-      
+
       String[] parsedMessages = message.split(" ");
 
       System.out.println(parsedMessages.length);
@@ -112,13 +119,27 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
         messageAll("prepare");
       } else if (command.equals("list")) {
         //System.out.println("In list Function" + command.equals("list"));
-        File f = new File("/Users/boss/Desktop/");
-        String[] fileList = f.list();
         String ret = "";
-        for (int i = 0; i < fileList.length; i++) {
-          System.out.println("list: " + fileList[i]);
-          ret += fileList[i] + "\n";
-        }
+
+//          File f=null;
+//          Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
+//          //System.out.println("Temporary directory created successfully!");
+//          String dirPath = tempDirectory.toString();
+//          System.out.println(dirPath);
+//          f = File.createTempFile(key, ".txt", new File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
+          //System.out.println("Temporary file created successfully!");
+
+          // File f = new File(tmpCustomPrefix + "/" + key);
+
+          String homeDir = System.getProperty("user.home");
+
+          File f = new File(homeDir + "/" + key);
+          String[] fileList = f.list();
+          for (int i = 0; i < fileList.length; i++) {
+            System.out.println("list: " + fileList[i]);
+            ret += fileList[i] + "\n";
+          }
+
             /*File file = new File("/Users");
             String[] fileList = file.list();
             String ret="";
@@ -127,6 +148,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
             }*/
 
         return ret;
+
       } else if (command.equals("upload") || command.equals("remove")) {
         System.out.println(date.format(new Date()) + ": begin_commit");
         messageAll("prepare");
@@ -136,7 +158,20 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
         // } else {
         //return ("{" + keystore.get(key) + "}");
         try {
-          File myObj = new File("/Users/boss/Desktop/" + key);
+
+//            File myObj=null;
+//            Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
+//            //System.out.println("Temporary directory created successfully!");
+//            String dirPath = tempDirectory.toString();
+//            System.out.println(dirPath);
+//            myObj = File.createTempFile(key, ".txt", new File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
+
+         // File myObj = new File(tmpCustomPrefix + "/" + key);
+
+          String homeDir = System.getProperty("user.home");
+
+          File myObj = new File(homeDir + "/" + key);
+
           Scanner myReader = new Scanner(myObj);
           String data = "";
           //System.out.println("What is data");
@@ -278,7 +313,17 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
 
       } else if(cmd.toLowerCase().equals("upload")){
         try {
-          File f = new File("/Users/boss/Desktop/" + key);
+//          File f=null;
+//          Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
+//          //System.out.println("Temporary directory created successfully!");
+//          String dirPath = tempDirectory.toString();
+//          System.out.println(dirPath);
+//          f = File.createTempFile(key, ".txt", new File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
+
+           //File f = new File(tmpCustomPrefix + "/" + key);
+          String homeDir = System.getProperty("user.home");
+
+          File f = new File(homeDir + "/" + key);
 
           FileWriter fileWriter = new FileWriter(f);
           PrintWriter printWriter = new PrintWriter(fileWriter);
@@ -291,7 +336,17 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       } else if (cmd.toLowerCase().equals("remove")){
         try
         {
-          File f = new File("/Users/boss/Desktop/" + key);
+//          File f=null;
+//          Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
+//          //System.out.println("Temporary directory created successfully!");
+//          String dirPath = tempDirectory.toString();
+//          System.out.println(dirPath);
+//          f = File.createTempFile(key, ".txt", new File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
+
+          String homeDir = System.getProperty("user.home");
+
+          File f = new File(homeDir + "/" + key);
+          // File f = new File(tmpCustomPrefix + "/" + key);
           if(f.delete())                      //returns Boolean value
           {
             System.out.println(f.getName() + " deleted");   //getting and printing the file name

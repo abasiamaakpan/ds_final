@@ -45,39 +45,42 @@ public class PaxosClient {
   private static String tryGet(String msg) {
     HashMap<String, Integer> map = new HashMap<String, Integer>();
     String res = "";
+    // check all servers
     for (int i = 0; i < 5; i++) {
+      // try each server here and save the response
       res = tryRmi(i, msg);
+
+      // check map to see if we have a matching key (entire return statement)
+      // if we do, +1 our count for that result
       if (map.containsKey(res)) {
         int count = map.get(res);
         map.put(res, count + 1);
+        // else we add that result to our HM and give it an initial count of 1
       } else {
         map.put(res, 1);
       }
     }
+
+    // temp result key where we will store the response
     String key = "";
+    // temp count for how many of each result we received
     int val = -1;
+    // check the whole map to see the highest result count
     for (Map.Entry<String, Integer> entry : map.entrySet()) {
       if (entry.getValue() > val) {
         key = entry.getKey();
         val = entry.getValue();
       }
     }
+
+    // if our highest result value is above our consenses number
+    // set that as the real result
     if (val > 2) {
       res = key;
+      // otherwise, return some kind of bad response
     } else {
       res = "The key you entered does not exist!";
     }
-
-    String response;
-
-    try {
-      response = serverRpcArr[Integer.valueOf(0)].clientRequest(msg);
-      System.out.println("Response" + response);
-
-    } catch (RemoteException e) {
-      e.printStackTrace();
-    }
-
 
     return res;
   }
@@ -107,10 +110,7 @@ public class PaxosClient {
    * @return response from attempted query
    */
   private static String tryRmi(int server, String msg) {
-    //System.out.println("Im called");
     setupConnections();
-    //System.out.println("Server" + server);
-    //System.out.println("Message" + msg);
     String response;
     try {
       response = serverRpcArr[Integer.valueOf(server)].clientRequest(msg);
@@ -118,6 +118,23 @@ public class PaxosClient {
       response = "";
     }
     return response;
+  }
+
+  private static String readLocalFile(String fileName) {
+    String fileContents = "";
+    // here we need to do the local file read from the fileName and fill the
+    // fileContents with what is in that file.
+
+    return "upload " + fileName + fileContents;
+  }
+
+  private static String writeFile(String fileName, String response) {
+    String res = "download failed";
+    // here we need to do a file write from the returned response
+    // write new file as fileName
+    // write response into that new file
+    // change our string res to successful if this all went well to be returned
+    return res;
   }
 
   /**
@@ -143,55 +160,50 @@ public class PaxosClient {
 
     try {
       // command loop with initial info prompt
-      System.out.println("Commands (put <fileName> <fileContents>, get <fileName>, list, delete <key>)");
+      System.out.println("Commands (upload <fileName>, download <fileName>, list, remove <fileName>)");
       while (true) {
         // user prompt
         System.out.print("Enter command:");
         String operation = sc.nextLine();
         String[] myArray = operation.trim().split(" ");
 
-        // System.out.println("From Client File " + myArray[0].toLowerCase().equals("list"));
-        //  System.out.println("From Client File " + (myArray.length));
         String res = "";
-        if (myArray.length == 3 && myArray[0].toLowerCase().equals("put")
-                || myArray.length == 2 && myArray[0].toLowerCase().equals("delete")) {
-          res = tryPutDelete(operation);
-          if (res.equals("")) {
-            System.out.println("ERROR - No response.");
-          } else {
-            System.out.println(res);
-          }
-        } else if (myArray.length == 2 && myArray[0].toLowerCase().equals("get")) {
-          res = tryGet(operation);
-          if (res.equals("")) {
-            System.out.println("ERROR - No response.");
-          } else {
-            System.out.println(res);
-          }
-        } else if (myArray.length == 1 && myArray[0].toLowerCase().equals("list")) {
-
-          res = tryRmi(0, "list");
+        if (myArray.length == 1 && myArray[0].toLowerCase().equals("list")) {
+          res = tryGet("list");
+          // res = tryRmi(0, "list");
           System.out.println("Response" + res);
 
-        } else if (myArray.length ==3 && myArray[0].toLowerCase().equals("upload") || myArray.length == 2 && myArray[0].toLowerCase().equals("remove")){
-          res = tryPutDelete(operation);
-          if(res.equals("")){
-            System.out.println("ERROR - No response.");
-          }
-          else {
-            System.out.println(res);
-          }
-        }else if (myArray.length == 2 && myArray[0].toLowerCase().equals("read")) {
-          res = tryGet(operation);
+        } else if (myArray.length == 3 && myArray[0].toLowerCase().equals("upload")) {
+          // here we have to read from a file, and create our new "operation" message
+          // this will then be sent to the tryPutDelete() function
+          String requestMessage = readLocalFile(myArray[1]);
+          res = tryPutDelete(requestMessage);
           if (res.equals("")) {
             System.out.println("ERROR - No response.");
           } else {
             System.out.println(res);
           }
-        }
-
-        else {
-          System.out.println("Command invalid. Usage: (put <key> <value>, get <key>, delete <key>)");
+        } else if (myArray.length == 2 && myArray[0].toLowerCase().equals("remove")) {
+          // should be our delete operation with no modification needed
+          res = tryPutDelete(operation);
+          if (res.equals("")) {
+            System.out.println("ERROR - No response.");
+          } else {
+            System.out.println(res);
+          }
+        } else if (myArray.length == 2 && myArray[0].toLowerCase().equals("download")) {
+          res = tryGet(operation);
+          if (res.equals("")) {
+            System.out.println("ERROR - No response.");
+          } else {
+            // this is where we need to create a file, and output the resut to that file
+            // lets return a response that makes sense for the client like "download
+            // successful" or "download failed"
+            String writeRes = writeFile(myArray[1], res);
+            System.out.println(writeRes);
+          }
+        } else {
+          System.out.println("Command invalid. Usage: (upload <fileName>, upload <fileName>, list, remove <fileName>)");
           continue;
         }
       }

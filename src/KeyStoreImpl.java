@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.FileSystems;
 
-
 /**
  * KeyStoreImpl is the main implementation class for all of the server
  * instances. Provides a distributed keyvalue storage across 5 servers that are
@@ -46,7 +45,6 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
 
   private static Path rootDirectory = FileSystems.getDefault().getPath("~");
 
-
   /**
    * Constructor taking in an array of server ports
    *
@@ -65,176 +63,173 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
    * @return response to the client after processing
    * @throws RemoteException if anything happens when trying to execute rpc
    */
-  public String clientRequest(String message){
-      System.out.println("From Impl file " + message);
+  public String clientRequest(String message) {
+    System.out.println("From Impl file " + message);
 
-      String[] parsedMessages = message.split(" ");
+    String[] parsedMessages = message.split(" ");
 
-      System.out.println(parsedMessages.length);
+    System.out.println(parsedMessages.length);
 
+    // check if we actually have a message to check
+    if (parsedMessages.length == 0) {
+      return (date.format(new Date()) + ": Invalid operation.");
+    }
 
-      // check if we actually have a message to check
-      if (parsedMessages.length == 0) {
-        return (date.format(new Date()) + ": Invalid operation.");
-      }
+    // setup human readable variables
+    this.command = parsedMessages[0].toLowerCase();
+    System.out.println(command);
 
-      // setup human readable variables
-      this.command = parsedMessages[0].toLowerCase();
-      System.out.println(command);
+    if (parsedMessages.length > 1) {
+      this.key = parsedMessages[1];
+      this.value = parsedMessages.length == 3 ? parsedMessages[2] : "empty";
+    }
+    System.out.println(command.equals("remove"));
 
-      if (parsedMessages.length > 1) {
-        this.key = parsedMessages[1];
-        this.value = parsedMessages.length == 3 ? parsedMessages[2] : "empty";
-      }
-      System.out.println(command.equals("remove"));
+    // save message to use later
+    this.msg = message;
 
-      // save message to use later
-      this.msg = message;
+    // System.out.println("Is get called here...");
 
-      //System.out.println("Is get called here...");
+    // evaluate statement for next steps
+    if (command.equals("get")) {
 
+      // System.out.println("Is get called here...");
 
-      // evaluate statement for next steps
-      if (command.equals("get")) {
-
-        // System.out.println("Is get called here...");
-
-        // check if we have that key in our keystore
-        if (!keystore.containsKey(key)) {
-          return ("The key you entered does not exist!");
-        } else {
-          return ("{" + keystore.get(key) + "}");
-        }
-
-      } else if (command.equals("put") || command.equals("delete")) {
-        //System.out.println("In put or delete");
-
-        // if delete, check if we have to do anything at all
-        if (command.equals("delete") && !keystore.containsKey(key)) {
-          return ("The key you entered does not exist!");
-        }
-
-        // if we get here, all should be good, so lets try to make the 2 stage commit.
-        System.out.println(date.format(new Date()) + ": begin_commit");
-        messageAll("prepare");
-      } else if (command.equals("list")) {
-        //System.out.println("In list Function" + command.equals("list"));
-        String ret = "";
-
-//          File f=null;
-//          Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
-//          //System.out.println("Temporary directory created successfully!");
-//          String dirPath = tempDirectory.toString();
-//          System.out.println(dirPath);
-//          f = File.createTempFile(key, ".txt", new File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
-          //System.out.println("Temporary file created successfully!");
-
-          // File f = new File(tmpCustomPrefix + "/" + key);
-
-          String homeDir = System.getProperty("user.home");
-
-          File f = new File(homeDir + "/" + key);
-          String[] fileList = f.list();
-          for (int i = 0; i < fileList.length; i++) {
-            System.out.println("list: " + fileList[i]);
-            ret += fileList[i] + "\n";
-          }
-
-            /*File file = new File("/Users");
-            String[] fileList = file.list();
-            String ret="";
-            for(String name:fileList){
-                ret+=name;
-            }*/
-
-        return ret;
-
-      } else if (command.equals("upload") || command.equals("remove")) {
-        System.out.println(date.format(new Date()) + ": begin_commit");
-        messageAll("prepare");
-      } else if (command.equals("read")) {
-        // if (!keystore.containsKey(key)) {
-        // return ("The key you entered does not exist!");
-        // } else {
-        //return ("{" + keystore.get(key) + "}");
-        try {
-
-//            File myObj=null;
-//            Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
-//            //System.out.println("Temporary directory created successfully!");
-//            String dirPath = tempDirectory.toString();
-//            System.out.println(dirPath);
-//            myObj = File.createTempFile(key, ".txt", new File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
-
-         // File myObj = new File(tmpCustomPrefix + "/" + key);
-
-          String homeDir = System.getProperty("user.home");
-
-          File myObj = new File(homeDir + "/" + key);
-
-          Scanner myReader = new Scanner(myObj);
-          String data = "";
-          //System.out.println("What is data");
-          while (myReader.hasNextLine()) {
-            data = myReader.nextLine();
-            System.out.println(data);
-          }
-          myReader.close();
-          return data;
-        } catch (FileNotFoundException e) {
-          System.out.println("An error occurred.");
-          e.printStackTrace();
-        }
-
-
-        //}
-
+      // check if we have that key in our keystore
+      if (!keystore.containsKey(key)) {
+        return ("The key you entered does not exist!");
       } else {
-        return ("Invalid operation. Try again.");
+        return ("{" + keystore.get(key) + "}");
       }
 
-      // setup timeout to make sure we don't hang if a server crashes or doesn't reply
-      // in time
-      long start_time = System.currentTimeMillis();
-      long wait_time = 10000;
-      long end_time = start_time + wait_time;
+    } else if (command.equals("put") || command.equals("delete")) {
+      // System.out.println("In put or delete");
 
-      // wait loop to allow clients to respond
-      while (!abort && wait) {
-        // abort if one of the servers take too long
-        if (System.currentTimeMillis() > end_time) {
-          this.abort = true;
-        }
-
-        // if we have all 4 votes, send out commit message to all servers
-        if (votes >= 2 && !commit) {
-          this.commit = true;
-          messageAll("commit");
-        }
-
-        // if we have all 4 ack messages, lets commit to our keystore
-        if (acks >= 2) {
-          String res = "no action taken.";
-          if (command.equals("put")) {
-            keystore.put(key, value);
-            res = "{" + key + ":" + value + "}" + " ADDED";
-          } else {
-            keystore.remove(key);
-            res = "{" + key + "}" + " DELETED";
-          }
-          System.out.println(date.format(new Date()) + ": end_of_transaction");
-          // reset state
-          reset();
-          return (res);
-        }
+      // if delete, check if we have to do anything at all
+      if (command.equals("delete") && !keystore.containsKey(key)) {
+        return ("The key you entered does not exist!");
       }
-      if (abort) {
-        messageAll("abort");
-        abort();
-        return ("Aborted.");
-      }
-      return ("Something went wrong. Try again.");
 
+      // if we get here, all should be good, so lets try to make the 2 stage commit.
+      System.out.println(date.format(new Date()) + ": begin_commit");
+      messageAll("prepare");
+    } else if (command.equals("list")) {
+      // System.out.println("In list Function" + command.equals("list"));
+      String ret = "";
+
+      // File f=null;
+      // Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
+      // //System.out.println("Temporary directory created successfully!");
+      // String dirPath = tempDirectory.toString();
+      // System.out.println(dirPath);
+      // f = File.createTempFile(key, ".txt", new
+      // File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
+      // System.out.println("Temporary file created successfully!");
+
+      // File f = new File(tmpCustomPrefix + "/" + key);
+
+      String homeDir = System.getProperty("user.home");
+
+      File f = new File(homeDir + "/" + key);
+      String[] fileList = f.list();
+      for (int i = 0; i < fileList.length; i++) {
+        System.out.println("list: " + fileList[i]);
+        ret += fileList[i] + "\n";
+      }
+
+      /*
+       * File file = new File("/Users"); String[] fileList = file.list(); String
+       * ret=""; for(String name:fileList){ ret+=name; }
+       */
+
+      return ret;
+
+    } else if (command.equals("upload") || command.equals("remove")) {
+      System.out.println(date.format(new Date()) + ": begin_commit");
+      messageAll("prepare");
+    } else if (command.equals("read")) {
+      // if (!keystore.containsKey(key)) {
+      // return ("The key you entered does not exist!");
+      // } else {
+      // return ("{" + keystore.get(key) + "}");
+      try {
+
+        // File myObj=null;
+        // Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
+        // //System.out.println("Temporary directory created successfully!");
+        // String dirPath = tempDirectory.toString();
+        // System.out.println(dirPath);
+        // myObj = File.createTempFile(key, ".txt", new
+        // File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
+
+        // File myObj = new File(tmpCustomPrefix + "/" + key);
+
+        String homeDir = System.getProperty("user.home");
+
+        File myObj = new File(homeDir + "/" + key);
+
+        Scanner myReader = new Scanner(myObj);
+        String data = "";
+        // System.out.println("What is data");
+        while (myReader.hasNextLine()) {
+          data = myReader.nextLine();
+          System.out.println(data);
+        }
+        myReader.close();
+        return data;
+      } catch (FileNotFoundException e) {
+        System.out.println("An error occurred.");
+        e.printStackTrace();
+      }
+
+      // }
+
+    } else {
+      return ("Invalid operation. Try again.");
+    }
+
+    // setup timeout to make sure we don't hang if a server crashes or doesn't reply
+    // in time
+    long start_time = System.currentTimeMillis();
+    long wait_time = 10000;
+    long end_time = start_time + wait_time;
+
+    // wait loop to allow clients to respond
+    while (!abort && wait) {
+      // abort if one of the servers take too long
+      if (System.currentTimeMillis() > end_time) {
+        this.abort = true;
+      }
+
+      // if we have all 4 votes, send out commit message to all servers
+      if (votes >= 2 && !commit) {
+        this.commit = true;
+        messageAll("commit");
+      }
+
+      // if we have all 4 ack messages, lets commit to our keystore
+      if (acks >= 2) {
+        String res = "no action taken.";
+        if (command.equals("upload")) {
+          // need to separate the filename and contents from the incoming client message
+          // for this function
+          // res = writeFile(fileName, contents);
+        } else {
+          // need to separate the filename from the message for this function
+          // res = deleteFile(fileName);
+        }
+        System.out.println(date.format(new Date()) + ": end_of_transaction");
+        // reset state
+        reset();
+        return (res);
+      }
+    }
+    if (abort) {
+      messageAll("abort");
+      abort();
+      return ("Aborted.");
+    }
+    return ("Something went wrong. Try again.");
 
   }
 
@@ -280,7 +275,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
    * @param value value string for the keystore
    * @throws RemoteException if anything happens when trying to execute rpc
    */
-  public void commit(int port, String cmd, String key, String value)  {
+  public void commit(int port, String cmd, String key, String value) {
     KeyStore access = null;
     try {
       access = (KeyStore) Naming.lookup("rmi://localhost:" + port + "/keystore" + port);
@@ -288,85 +283,54 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
     }
 
-    System.out.println("TESTINGGGGGGGGG "+ cmd.toLowerCase().equals("remove"));
+    System.out.println("TESTINGGGGGGGGG " + cmd.toLowerCase().equals("remove"));
 
     if (port == promisedHost && commit || ready) {
-      if (cmd.toLowerCase().equals("put")) {
-
-        keystore.put(key, value);
-        if (ready) {
-          try {
-            access.reply("ack");
-          } catch (Exception e) {
-            System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
-          }
-        }
-      } else if (cmd.toLowerCase().equals("delete")) {
-        keystore.remove(key);
-        if (ready) {
-          try {
-            access.reply("ack");
-          } catch (Exception e) {
-            System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
-          }
-        }
-
-      } else if(cmd.toLowerCase().equals("upload")){
+      if (cmd.toLowerCase().equals("upload")) {
         try {
-//          File f=null;
-//          Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
-//          //System.out.println("Temporary directory created successfully!");
-//          String dirPath = tempDirectory.toString();
-//          System.out.println(dirPath);
-//          f = File.createTempFile(key, ".txt", new File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
-
-           //File f = new File(tmpCustomPrefix + "/" + key);
           String homeDir = System.getProperty("user.home");
-
           File f = new File(homeDir + "/" + key);
-
           FileWriter fileWriter = new FileWriter(f);
           PrintWriter printWriter = new PrintWriter(fileWriter);
+
           printWriter.println(value);
-          //printWriter.printf("Product name is %s and its price is %d $", "iPhone", 1000);
           printWriter.close();
-        }catch(IOException o){
 
-        }
-      } else if (cmd.toLowerCase().equals("remove")){
-        try
-        {
-//          File f=null;
-//          Path tempDirectory = Files.createTempDirectory(rootDirectory, "");
-//          //System.out.println("Temporary directory created successfully!");
-//          String dirPath = tempDirectory.toString();
-//          System.out.println(dirPath);
-//          f = File.createTempFile(key, ".txt", new File("/var/folders/t3/xhjd4pfs3v1f1ywlkd96jp640000gn/T/"));
-
-          String homeDir = System.getProperty("user.home");
-
-          File f = new File(homeDir + "/" + key);
-          // File f = new File(tmpCustomPrefix + "/" + key);
-          if(f.delete())                      //returns Boolean value
-          {
-            System.out.println(f.getName() + " deleted");   //getting and printing the file name
+          // reply with ack to let the controling server know we finished our commit
+          // successfully
+          if (ready) {
+            try {
+              access.reply("ack");
+            } catch (Exception e) {
+              System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
+            }
           }
-          else
-          {
-            System.out.println("failed");
-          }
+        } catch (IOException e) {
+          System.out.println(date.format(new Date()) + "Had an IOException: " + e);
         }
-        catch(Exception e)
-        {
+      } else if (cmd.toLowerCase().equals("remove")) {
+        try {
+          String deleteRes = deleteFile(key);
+          System.out.println(date.format(new Date()) + deleteRes);
+
+          // reply with ack to let the controling server know we finished our commit
+          // successfully
+          if (ready) {
+            try {
+              access.reply("ack");
+            } catch (Exception e) {
+              System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
+            }
+          }
+        } catch (Exception e) {
           e.printStackTrace();
         }
-
       }
 
       System.out.println(date.format(new Date()) + ": commit recorded.");
       reset();
     } else {
-      System.out.println("Something went wrong.");
+      System.out.println(date.format(new Date()) + "Something went wrong.");
       abort();
     }
   }
@@ -396,6 +360,21 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   public void abort() {
     System.out.println(date.format(new Date()) + ": aborting.");
     reset();
+  }
+
+  private String deleteFile(String fileName) {
+    String homeDir = System.getProperty("user.home");
+    File f = new File(homeDir + "/" + fileName);
+
+    if (f.delete()) {
+      return "deleted";
+    } else {
+      return "failed";
+    }
+  }
+
+  private String writeFile(String fileName, String contents) {
+    return "write successful";
   }
 
   /**
@@ -440,7 +419,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       } catch (Exception e) {
         // abort = true;
         System.out.println(date.format(new Date()) + ": Error sending " + type + " to server: " + "rmi://localhost:"
-                + serverArr[i] + "/keystore" + serverArr[i]);
+            + serverArr[i] + "/keystore" + serverArr[i]);
       }
     }
 
@@ -472,5 +451,3 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
     this.promisedHost = -1;
   }
 }
-
-

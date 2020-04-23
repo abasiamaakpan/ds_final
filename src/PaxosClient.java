@@ -1,4 +1,5 @@
 import java.rmi.Naming;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -9,11 +10,11 @@ import java.util.Date;
  * PaxosClient is the client for Project 4. This project for connecting to 5
  * servers using the Paxos algorithm. When running, pass the 5 ports for the
  * servers assumed on localhost for this example.
- * 
+ *
  * java PaxosClient 9090 9091 9092 9093 9094
- * 
+ *
  * Example: <command> <key> <value>
- * 
+ *
  * @author Neil Routley
  * @since 04/17/2020
  */
@@ -37,7 +38,7 @@ public class PaxosClient {
   /**
    * try to get a value based on a key from all the servers. majority consesus
    * required.
-   * 
+   *
    * @param msg the string message being passed to the servers
    * @return response from the consensus.
    */
@@ -66,12 +67,24 @@ public class PaxosClient {
     } else {
       res = "The key you entered does not exist!";
     }
+
+    String response;
+
+    try {
+      response = serverRpcArr[Integer.valueOf(0)].clientRequest(msg);
+      System.out.println("Response" + response);
+
+    } catch (RemoteException e) {
+      e.printStackTrace();
+    }
+
+
     return res;
   }
 
   /**
    * try to submit a put or delete command to any avaliable server.
-   * 
+   *
    * @param msg put or delete message being sent
    * @return response from trying to commit a put or delete
    */
@@ -88,13 +101,16 @@ public class PaxosClient {
 
   /**
    * try to submit a query to a specified server. helper function.
-   * 
+   *
    * @param server port which the server is on
    * @param msg    message being sent to the server
    * @return response from attempted query
    */
   private static String tryRmi(int server, String msg) {
+    //System.out.println("Im called");
     setupConnections();
+    //System.out.println("Server" + server);
+    //System.out.println("Message" + msg);
     String response;
     try {
       response = serverRpcArr[Integer.valueOf(server)].clientRequest(msg);
@@ -107,7 +123,7 @@ public class PaxosClient {
   /**
    * Main Client method that connects to as many servers as you pass arguments.
    * You should pass 5 port arguments for this assignment
-   * 
+   *
    * @param args should pass 5 port arguments
    */
   public static void main(String args[]) {
@@ -134,9 +150,11 @@ public class PaxosClient {
         String operation = sc.nextLine();
         String[] myArray = operation.trim().split(" ");
 
+        // System.out.println("From Client File " + myArray[0].toLowerCase().equals("list"));
+        //  System.out.println("From Client File " + (myArray.length));
         String res = "";
         if (myArray.length == 3 && myArray[0].toLowerCase().equals("put")
-            || myArray.length == 2 && myArray[0].toLowerCase().equals("delete")) {
+                || myArray.length == 2 && myArray[0].toLowerCase().equals("delete")) {
           res = tryPutDelete(operation);
           if (res.equals("")) {
             System.out.println("ERROR - No response.");
@@ -151,8 +169,28 @@ public class PaxosClient {
             System.out.println(res);
           }
         } else if (myArray.length == 1 && myArray[0].toLowerCase().equals("list")) {
+
           res = tryRmi(0, "list");
-        } else {
+          System.out.println("Response" + res);
+
+        } else if (myArray.length ==3 && myArray[0].toLowerCase().equals("upload") || myArray.length == 2 && myArray[0].toLowerCase().equals("remove")){
+          res = tryPutDelete(operation);
+          if(res.equals("")){
+            System.out.println("ERROR - No response.");
+          }
+          else {
+            System.out.println(res);
+          }
+        }else if (myArray.length == 2 && myArray[0].toLowerCase().equals("read")) {
+          res = tryGet(operation);
+          if (res.equals("")) {
+            System.out.println("ERROR - No response.");
+          } else {
+            System.out.println(res);
+          }
+        }
+
+        else {
           System.out.println("Command invalid. Usage: (put <key> <value>, get <key>, delete <key>)");
           continue;
         }

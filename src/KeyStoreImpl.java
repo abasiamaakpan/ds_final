@@ -1,4 +1,7 @@
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.FileWriter;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -7,12 +10,15 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
+import java.io.BufferedWriter;
+import java.io.PrintWriter;
 
 /**
  * KeyStoreImpl is the main implementation class for all of the server
  * instances. Provides a distributed keyvalue storage across 5 servers that are
  * coordinated using a Paxos algorithm.
- * 
+ *
  * @author Neil Routley
  * @since 04/17/2020
  */
@@ -25,6 +31,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   SimpleDateFormat date = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss:SSS");
 
   // state and storage variables
+
   int[] serverArr;
   KeyStore[] serverRpcArr;
   boolean abort, commit, ready, setup, wait = false;
@@ -35,7 +42,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
 
   /**
    * Constructor taking in an array of server ports
-   * 
+   *
    * @param serverArr integer array of server ports
    * @throws RemoteException an exception if anything goes wrong
    */
@@ -46,106 +53,159 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
 
   /**
    * Main function that is called to process client request messages.
-   * 
+   *
    * @param message a string containing the client message
    * @return response to the client after processing
    * @throws RemoteException if anything happens when trying to execute rpc
    */
-  public String clientRequest(String message) {
-    String[] parsedMessages = message.split(" ");
+  public String clientRequest(String message){
+      System.out.println("From Impl file " + message);
+      
+      String[] parsedMessages = message.split(" ");
 
-    // check if we actually have a message to check
-    if (parsedMessages.length == 0) {
-      return (date.format(new Date()) + ": Invalid operation.");
-    }
+      System.out.println(parsedMessages.length);
 
-    // setup human readable variables
-    this.command = parsedMessages[0].toLowerCase();
-    this.key = parsedMessages[1];
-    this.value = parsedMessages.length == 3 ? parsedMessages[2] : "empty";
 
-    // save message to use later
-    this.msg = message;
-
-    // evaluate statement for next steps
-    if (command.equals("get")) {
-
-      // check if we have that key in our keystore
-      if (!keystore.containsKey(key)) {
-        return ("The key you entered does not exist!");
-      } else {
-        return ("{" + keystore.get(key) + "}");
+      // check if we actually have a message to check
+      if (parsedMessages.length == 0) {
+        return (date.format(new Date()) + ": Invalid operation.");
       }
 
-    } else if (command.equals("put") || command.equals("delete")) {
-      // if delete, check if we have to do anything at all
-      if (command.equals("delete") && !keystore.containsKey(key)) {
-        return ("The key you entered does not exist!");
+      // setup human readable variables
+      this.command = parsedMessages[0].toLowerCase();
+      System.out.println(command);
+
+      if (parsedMessages.length > 1) {
+        this.key = parsedMessages[1];
+        this.value = parsedMessages.length == 3 ? parsedMessages[2] : "empty";
       }
+      System.out.println(command.equals("remove"));
 
-      // if we get here, all should be good, so lets try to make the 2 stage commit.
-      System.out.println(date.format(new Date()) + ": begin_commit");
-      messageAll("prepare");
-    } else if (command.equals("list")) {
-      System.out.println("List out some stuff...");
-      File f = new File("./");
-      String[] fileList = f.list();
-      String ret = "";
-      for (int i = 0; i < fileList.length; i++) {
-        System.out.println("list: " + fileList[i]);
-        ret += fileList[i] + "\n";
-      }
-      return ret;
-    } else {
-      return ("Invalid operation. Try again.");
-    }
+      // save message to use later
+      this.msg = message;
 
-    // setup timeout to make sure we don't hang if a server crashes or doesn't reply
-    // in time
-    long start_time = System.currentTimeMillis();
-    long wait_time = 10000;
-    long end_time = start_time + wait_time;
+      //System.out.println("Is get called here...");
 
-    // wait loop to allow clients to respond
-    while (!abort && wait) {
-      // abort if one of the servers take too long
-      if (System.currentTimeMillis() > end_time) {
-        this.abort = true;
-      }
 
-      // if we have all 4 votes, send out commit message to all servers
-      if (votes >= 2 && !commit) {
-        this.commit = true;
-        messageAll("commit");
-      }
+      // evaluate statement for next steps
+      if (command.equals("get")) {
 
-      // if we have all 4 ack messages, lets commit to our keystore
-      if (acks >= 2) {
-        String res = "no action taken.";
-        if (command.equals("put")) {
-          keystore.put(key, value);
-          res = "{" + key + ":" + value + "}" + " ADDED";
+        // System.out.println("Is get called here...");
+
+        // check if we have that key in our keystore
+        if (!keystore.containsKey(key)) {
+          return ("The key you entered does not exist!");
         } else {
-          keystore.remove(key);
-          res = "{" + key + "}" + " DELETED";
+          return ("{" + keystore.get(key) + "}");
         }
-        System.out.println(date.format(new Date()) + ": end_of_transaction");
-        // reset state
-        reset();
-        return (res);
+
+      } else if (command.equals("put") || command.equals("delete")) {
+        //System.out.println("In put or delete");
+
+        // if delete, check if we have to do anything at all
+        if (command.equals("delete") && !keystore.containsKey(key)) {
+          return ("The key you entered does not exist!");
+        }
+
+        // if we get here, all should be good, so lets try to make the 2 stage commit.
+        System.out.println(date.format(new Date()) + ": begin_commit");
+        messageAll("prepare");
+      } else if (command.equals("list")) {
+        //System.out.println("In list Function" + command.equals("list"));
+        File f = new File("/Users/boss/Desktop/");
+        String[] fileList = f.list();
+        String ret = "";
+        for (int i = 0; i < fileList.length; i++) {
+          System.out.println("list: " + fileList[i]);
+          ret += fileList[i] + "\n";
+        }
+            /*File file = new File("/Users");
+            String[] fileList = file.list();
+            String ret="";
+            for(String name:fileList){
+                ret+=name;
+            }*/
+
+        return ret;
+      } else if (command.equals("upload") || command.equals("remove")) {
+        System.out.println(date.format(new Date()) + ": begin_commit");
+        messageAll("prepare");
+      } else if (command.equals("read")) {
+        // if (!keystore.containsKey(key)) {
+        // return ("The key you entered does not exist!");
+        // } else {
+        //return ("{" + keystore.get(key) + "}");
+        try {
+          File myObj = new File("/Users/boss/Desktop/" + key);
+          Scanner myReader = new Scanner(myObj);
+          String data = "";
+          //System.out.println("What is data");
+          while (myReader.hasNextLine()) {
+            data = myReader.nextLine();
+            System.out.println(data);
+          }
+          myReader.close();
+          return data;
+        } catch (FileNotFoundException e) {
+          System.out.println("An error occurred.");
+          e.printStackTrace();
+        }
+
+
+        //}
+
+      } else {
+        return ("Invalid operation. Try again.");
       }
-    }
-    if (abort) {
-      messageAll("abort");
-      abort();
-      return ("Aborted.");
-    }
-    return ("Something went wrong. Try again.");
+
+      // setup timeout to make sure we don't hang if a server crashes or doesn't reply
+      // in time
+      long start_time = System.currentTimeMillis();
+      long wait_time = 10000;
+      long end_time = start_time + wait_time;
+
+      // wait loop to allow clients to respond
+      while (!abort && wait) {
+        // abort if one of the servers take too long
+        if (System.currentTimeMillis() > end_time) {
+          this.abort = true;
+        }
+
+        // if we have all 4 votes, send out commit message to all servers
+        if (votes >= 2 && !commit) {
+          this.commit = true;
+          messageAll("commit");
+        }
+
+        // if we have all 4 ack messages, lets commit to our keystore
+        if (acks >= 2) {
+          String res = "no action taken.";
+          if (command.equals("put")) {
+            keystore.put(key, value);
+            res = "{" + key + ":" + value + "}" + " ADDED";
+          } else {
+            keystore.remove(key);
+            res = "{" + key + "}" + " DELETED";
+          }
+          System.out.println(date.format(new Date()) + ": end_of_transaction");
+          // reset state
+          reset();
+          return (res);
+        }
+      }
+      if (abort) {
+        messageAll("abort");
+        abort();
+        return ("Aborted.");
+      }
+      return ("Something went wrong. Try again.");
+
+
   }
 
   /**
    * prepare rpc will check if we can enter a ready state to wait for a commit
-   * 
+   *
    * @param port integer port for the server requesting
    * @throws RemoteException if anything happens when trying to execute rpc
    */
@@ -178,14 +238,14 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   /**
    * commit rpc will attempt to make a commit against the local keystore and
    * respond with an ack message to the issuing server.
-   * 
+   *
    * @param port  requesting server port for response
    * @param cmd   a command message type for commit (put or delete)
    * @param key   key string for the keystore
    * @param value value string for the keystore
    * @throws RemoteException if anything happens when trying to execute rpc
    */
-  public void commit(int port, String cmd, String key, String value) {
+  public void commit(int port, String cmd, String key, String value)  {
     KeyStore access = null;
     try {
       access = (KeyStore) Naming.lookup("rmi://localhost:" + port + "/keystore" + port);
@@ -193,8 +253,11 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
     }
 
+    System.out.println("TESTINGGGGGGGGG "+ cmd.toLowerCase().equals("remove"));
+
     if (port == promisedHost && commit || ready) {
       if (cmd.toLowerCase().equals("put")) {
+
         keystore.put(key, value);
         if (ready) {
           try {
@@ -212,7 +275,39 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
             System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
           }
         }
+
+      } else if(cmd.toLowerCase().equals("upload")){
+        try {
+          File f = new File("/Users/boss/Desktop/" + key);
+
+          FileWriter fileWriter = new FileWriter(f);
+          PrintWriter printWriter = new PrintWriter(fileWriter);
+          printWriter.println(value);
+          //printWriter.printf("Product name is %s and its price is %d $", "iPhone", 1000);
+          printWriter.close();
+        }catch(IOException o){
+
+        }
+      } else if (cmd.toLowerCase().equals("remove")){
+        try
+        {
+          File f = new File("/Users/boss/Desktop/" + key);
+          if(f.delete())                      //returns Boolean value
+          {
+            System.out.println(f.getName() + " deleted");   //getting and printing the file name
+          }
+          else
+          {
+            System.out.println("failed");
+          }
+        }
+        catch(Exception e)
+        {
+          e.printStackTrace();
+        }
+
       }
+
       System.out.println(date.format(new Date()) + ": commit recorded.");
       reset();
     } else {
@@ -224,7 +319,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   /**
    * reply rpc is a reply from slave servers to count and check whatever vote or
    * ack they submit
-   * 
+   *
    * @param type string for the kind of reply received
    * @throws RemoteException if anything happens when trying to execute rpc
    */
@@ -240,7 +335,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
 
   /**
    * abort method logs the event and initates the reset of state
-   * 
+   *
    * @throws RemoteException if anything happens when trying to execute rpc
    */
   public void abort() {
@@ -270,7 +365,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   /**
    * Sends a message to all servers for the two stage commit process; prepare,
    * commit, and abort
-   * 
+   *
    * @param type is the type of message to send
    * @throws RemoteException
    */
@@ -290,7 +385,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       } catch (Exception e) {
         // abort = true;
         System.out.println(date.format(new Date()) + ": Error sending " + type + " to server: " + "rmi://localhost:"
-            + serverArr[i] + "/keystore" + serverArr[i]);
+                + serverArr[i] + "/keystore" + serverArr[i]);
       }
     }
 
@@ -322,3 +417,5 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
     this.promisedHost = -1;
   }
 }
+
+

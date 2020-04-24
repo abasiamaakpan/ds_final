@@ -6,14 +6,9 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
-import java.io.BufferedWriter;
 import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.FileSystems;
 
@@ -28,7 +23,7 @@ import java.nio.file.FileSystems;
 public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   private static final long serialVersionUID = 1L;
   // keyvalue storage
-  Map<String, String> keystore = Collections.synchronizedMap(new HashMap<>());
+  // Map<String, String> keystore = Collections.synchronizedMap(new HashMap<>());
 
   // date formatter
   SimpleDateFormat date = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss:SSS");
@@ -39,7 +34,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   KeyStore[] serverRpcArr;
   boolean abort, commit, ready, setup, wait = false;
   int votes, acks = 0;
-  String msg, command, key, value = "";
+  String msg, command, fileName, contents = "";
   Date prepDate;
   int promisedHost;
 
@@ -80,22 +75,22 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
     System.out.println(command);
 
     if (parsedMessages.length > 1) {
-      this.key = parsedMessages[1];
-      this.value = parsedMessages.length == 3 ? parsedMessages[2] : "empty";
+      this.fileName = parsedMessages[1];
+      this.contents = parsedMessages.length >= 3
+          ? message.substring(parsedMessages[0].length() + parsedMessages[1].length() + 1, message.length())
+          : "empty";
     }
     System.out.println(command.equals("remove"));
 
     // save message to use later
     this.msg = message;
 
-    // System.out.println("Is get called here...");
-
     // evaluate statement for next steps
     if (command.equals("list")) {
       String ret = "";
       String homeDir = System.getProperty("user.home");
 
-      File f = new File(homeDir + "/" + key);
+      File f = new File(homeDir + "/" + fileName);
       String[] fileList = f.list();
       for (int i = 0; i < fileList.length; i++) {
         System.out.println("list: " + fileList[i]);
@@ -108,7 +103,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       System.out.println(date.format(new Date()) + ": begin_commit");
       messageAll("prepare");
     } else if (command.equals("read")) {
-      return readFile(key);
+      return readFile(fileName);
     } else {
       return ("Invalid operation. Try again.");
     }
@@ -212,6 +207,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       if (cmd.toLowerCase().equals("upload")) {
         // try to write to a file locally
         String writeStatus = writeFile(fileName, contents);
+        System.out.println(date.format(new Date()) + "write status: " + writeStatus);
 
         // reply with ack to let the controling server know we finished our commit
         // successfully
@@ -224,7 +220,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
         }
       } else if (cmd.toLowerCase().equals("remove")) {
         try {
-          String deleteRes = deleteFile(key);
+          String deleteRes = deleteFile(fileName);
           System.out.println(date.format(new Date()) + deleteRes);
 
           // reply with ack to let the controling server know we finished our commit
@@ -291,11 +287,11 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
     String res = "write failed";
     try {
       String homeDir = System.getProperty("user.home");
-      File f = new File(homeDir + "/" + key);
+      File f = new File(homeDir + "/" + fileName);
       FileWriter fileWriter = new FileWriter(f);
       PrintWriter printWriter = new PrintWriter(fileWriter);
 
-      printWriter.println(value);
+      printWriter.println(contents);
       printWriter.close();
       res = "write successful";
     } catch (IOException e) {
@@ -308,7 +304,6 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
     String data = "error reading file";
     try {
       String homeDir = System.getProperty("user.home");
-
       File myObj = new File(homeDir + "/" + fileName);
 
       Scanner myReader = new Scanner(myObj);
@@ -360,7 +355,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
         if (type.equals("prepare")) {
           serverRpcArr[i].prepare(serverArr[0], new Date());
         } else if (type.equals("commit")) {
-          serverRpcArr[i].commit(serverArr[0], command, key, value);
+          serverRpcArr[i].commit(serverArr[0], command, fileName, contents);
         } else if (type.equals("abort")) {
           serverRpcArr[i].abort();
         }
@@ -391,8 +386,8 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
     this.wait = false;
     this.msg = "";
     this.command = "";
-    this.key = "";
-    this.value = "";
+    this.fileName = "";
+    this.contents = "";
     this.votes = 0;
     this.acks = 0;
     this.prepDate = null;

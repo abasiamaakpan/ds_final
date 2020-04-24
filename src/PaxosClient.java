@@ -173,7 +173,7 @@ public class PaxosClient {
           // res = tryRmi(0, "list");
           System.out.println("Response" + res);
 
-        } else if (myArray.length == 3 && myArray[0].toLowerCase().equals("upload")) {
+        } else if (myArray.length >= 3 && myArray[0].toLowerCase().equals("upload")) {
           // here we have to read from a file, and create our new "operation" message
           // this will then be sent to the tryPutDelete() function
           String requestMessage = readLocalFile(myArray[1]);

@@ -5,53 +5,29 @@
 # then starts the client with matching ports
 # run this from the base directory ./ with included ./jar directory+files
 #
-# @auth Neil Routley
-# @since 03/28/2020
-
-# osascript <<END 
-# tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/PaxosServer.jar 9090 9091 9092 9093 9094"
-# END
-
-# osascript <<END 
-# tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/PaxosServer.jar 9091 9090 9092 9093 9094"
-# END
-
-# osascript <<END 
-# tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/PaxosServer.jar 9092 9090 9091 9093 9094"
-# END
-
-# osascript <<END 
-# tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/PaxosServer.jar 9093 9090 9091 9092 9094"
-# END
-
-# osascript <<END 
-# tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/PaxosServer.jar 9094 9090 9091 9092 9093"
-# END
-
-# osascript <<END 
-# tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/PaxosClient.jar 9090 9091 9092 9093 9094"
-# END
+# @auth Neil Routley, Sanchit Saini, Abasiama Akpan
+# @since 04/24/2020
 
 osascript <<END 
-tell app "Terminal" to do script "cd \"`pwd`\" && java PaxosServer 9090 9091 9092 9093 9094"
+tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/FileServer.jar 9090 9091 9092 9093 9094"
 END
 
 osascript <<END 
-tell app "Terminal" to do script "cd \"`pwd`\" && java PaxosServer 9091 9090 9092 9093 9094"
+tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/FileServer.jar 9091 9090 9092 9093 9094"
 END
 
 osascript <<END 
-tell app "Terminal" to do script "cd \"`pwd`\" && java PaxosServer 9092 9090 9091 9093 9094"
+tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/FileServer.jar 9092 9090 9091 9093 9094"
 END
 
 osascript <<END 
-tell app "Terminal" to do script "cd \"`pwd`\" && java PaxosServer 9093 9090 9091 9092 9094"
+tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/FileServer.jar 9093 9090 9091 9092 9094"
 END
 
 osascript <<END 
-tell app "Terminal" to do script "cd \"`pwd`\" && java PaxosServer 9094 9090 9091 9092 9093"
+tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/FileServer.jar 9094 9090 9091 9092 9093"
 END
 
 osascript <<END 
-tell app "Terminal" to do script "cd \"`pwd`\" && java PaxosClient 9090 9091 9092 9093 9094"
+tell app "Terminal" to do script "cd \"`pwd`\" && java -jar jar/FileClient.jar 9090 9091 9092 9093 9094"
 END

@@ -20,11 +20,11 @@ import java.text.SimpleDateFormat;
  *
  * Example: <command> <file> <content>
  *
- * @author Neil Routley
- * @since 04/17/2020
+ * @author Neil Routley, Sanchit Saini, Abasiama Akpan
+ * @since 04/24/2020
  */
 public class PaxosClient {
-  static KeyStore[] serverRpcArr;
+  static FileStore[] serverRpcArr;
   static int[] serverArr;
   static SimpleDateFormat date = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss:SSS");
 
@@ -37,7 +37,7 @@ public class PaxosClient {
   private static void setupConnections() {
     for (int i = 0; i < serverArr.length; i++) {
       try {
-        serverRpcArr[i] = (KeyStore) Naming.lookup("rmi://localhost:" + serverArr[i] + "/keystore" + serverArr[i]);
+        serverRpcArr[i] = (FileStore) Naming.lookup("rmi://localhost:" + serverArr[i] + "/filestore" + serverArr[i]);
       } catch (Exception e) {
       }
     }
@@ -140,7 +140,6 @@ public class PaxosClient {
       tempDir.mkdir();
     }
     filepath = currentDir + "/ClientFiles/";
-
   }
 
   /**
@@ -150,24 +149,26 @@ public class PaxosClient {
    * @return the file name and file contents / unsuccessful error message
    */
   private static String readLocalFile(String fileName) {
-    String fileContents;
+    String fileContents = "";
     // here we need to do the local file read from the fileName and fill the
     // fileContents with what is in that file.
-    File file = new File(filepath + fileName + ".txt");
-    StringBuilder sb = new StringBuilder();
+    File file = new File(filepath + fileName);
+    // StringBuilder sb = new StringBuilder();
     try {
-      Scanner reader = new Scanner(file);
-      while (reader.hasNextLine()) {
-        String data = reader.nextLine();
-        sb.append(data);
+      Scanner myReader = new Scanner(file);
+      while (myReader.hasNextLine()) {
+        fileContents += myReader.nextLine() + "\n";
       }
-      reader.close();
+      // removes the trailing new line character \n
+      fileContents = fileContents.substring(0, fileContents.length() - 1);
+
+      myReader.close();
+
     } catch (FileNotFoundException e) {
       // e.printStackTrace();
       return "Something went wrong. File reading failed.";
     }
 
-    fileContents = sb.toString();
     return "upload " + fileName + " " + fileContents;
   }
 
@@ -189,7 +190,7 @@ public class PaxosClient {
     }
 
     try (Writer writer = new BufferedWriter(
-        new OutputStreamWriter(new FileOutputStream(filepath + fileName + ".txt"), "utf-8"))) {
+        new OutputStreamWriter(new FileOutputStream(filepath + fileName), "utf-8"))) {
       writer.write(sb.toString());
       res = "Successful!";
     } catch (IOException e) {
@@ -212,13 +213,13 @@ public class PaxosClient {
         serverArr[i] = Integer.valueOf(args[i]);
       }
     } else {
-      System.out.println("Usage: java PaxosClient <port1> <port2> <port3> <port4> <port5>");
+      System.out.println("Usage: java -jar FileClient.jar <port1> <port2> <port3> <port4> <port5>");
       System.exit(1);
     }
 
     createDirectory();
 
-    serverRpcArr = new KeyStore[serverArr.length];
+    serverRpcArr = new FileStore[serverArr.length];
     Scanner sc = new Scanner(System.in);
 
     try {
@@ -232,25 +233,10 @@ public class PaxosClient {
 
         String res = "";
 
-        if (myArray.length == 2 && myArray[0].toLowerCase().equals("read")) {
-          try {
-            String currentWorkingDir = System.getProperty("user.dir");
-            File myObj = new File(currentWorkingDir + "/clientFiles/" + myArray[1]);
-            Scanner myReader = new Scanner(myObj);
-            while (myReader.hasNextLine()) {
-              String data = myReader.nextLine();
-              System.out.println(data);
-            }
-            myReader.close();
-          } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-          }
-        } else if (myArray.length == 1 && myArray[0].toLowerCase().equals("list")) {
+        if (myArray.length == 1 && myArray[0].toLowerCase().equals("list")) {
           res = tryGet("list");
-          // res = tryRmi(0, "list");
-          System.out.println("Response" + res);
-        } else if (myArray.length >= 3 && myArray[0].toLowerCase().equals("upload")) {
+          System.out.println(res);
+        } else if (myArray.length == 2 && myArray[0].toLowerCase().equals("upload")) {
           // here we have to read from a file, and create our new "operation" message
           // this will then be sent to the tryPutDelete() function
           String requestMessage = readLocalFile(myArray[1]);

@@ -9,8 +9,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 import java.io.PrintWriter;
-import java.nio.file.Path;
-import java.nio.file.FileSystems;
 
 /**
  * KeyStoreImpl is the main implementation class for all of the server
@@ -37,8 +35,6 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   String msg, command, fileName, contents = "";
   Date prepDate;
   int promisedHost;
-
-  private static Path rootDirectory = FileSystems.getDefault().getPath("~");
 
   /**
    * Constructor taking in an array of server ports
@@ -84,6 +80,8 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
 
     // save message to use later
     this.msg = message;
+
+    // System.out.println("Is get called here...");
 
     // evaluate statement for next steps
     if (command.equals("list")) {

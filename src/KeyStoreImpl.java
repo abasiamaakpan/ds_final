@@ -1,3 +1,7 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.FileWriter;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -6,12 +10,18 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
+import java.io.BufferedWriter;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.FileSystems;
 
 /**
  * KeyStoreImpl is the main implementation class for all of the server
  * instances. Provides a distributed keyvalue storage across 5 servers that are
  * coordinated using a Paxos algorithm.
- * 
+ *
  * @author Neil Routley
  * @since 04/17/2020
  */
@@ -24,6 +34,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   SimpleDateFormat date = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss:SSS");
 
   // state and storage variables
+
   int[] serverArr;
   KeyStore[] serverRpcArr;
   boolean abort, commit, ready, setup, wait = false;
@@ -32,9 +43,11 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   Date prepDate;
   int promisedHost;
 
+  private static Path rootDirectory = FileSystems.getDefault().getPath("~");
+
   /**
    * Constructor taking in an array of server ports
-   * 
+   *
    * @param serverArr integer array of server ports
    * @throws RemoteException an exception if anything goes wrong
    */
@@ -45,13 +58,17 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
 
   /**
    * Main function that is called to process client request messages.
-   * 
+   *
    * @param message a string containing the client message
    * @return response to the client after processing
    * @throws RemoteException if anything happens when trying to execute rpc
    */
   public String clientRequest(String message) {
+    System.out.println("From Impl file " + message);
+
     String[] parsedMessages = message.split(" ");
+
+    System.out.println(parsedMessages.length);
 
     // check if we actually have a message to check
     if (parsedMessages.length == 0) {
@@ -60,31 +77,38 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
 
     // setup human readable variables
     this.command = parsedMessages[0].toLowerCase();
-    this.key = parsedMessages[1];
-    this.value = parsedMessages.length == 3 ? parsedMessages[2] : "empty";
+    System.out.println(command);
+
+    if (parsedMessages.length > 1) {
+      this.key = parsedMessages[1];
+      this.value = parsedMessages.length == 3 ? parsedMessages[2] : "empty";
+    }
+    System.out.println(command.equals("remove"));
 
     // save message to use later
     this.msg = message;
 
+    // System.out.println("Is get called here...");
+
     // evaluate statement for next steps
-    if (command.equals("get")) {
+    if (command.equals("list")) {
+      String ret = "";
+      String homeDir = System.getProperty("user.home");
 
-      // check if we have that key in our keystore
-      if (!keystore.containsKey(key)) {
-        return ("The key you entered does not exist!");
-      } else {
-        return ("{" + keystore.get(key) + "}");
+      File f = new File(homeDir + "/" + key);
+      String[] fileList = f.list();
+      for (int i = 0; i < fileList.length; i++) {
+        System.out.println("list: " + fileList[i]);
+        ret += fileList[i] + "\n";
       }
 
-    } else if (command.equals("put") || command.equals("delete")) {
-      // if delete, check if we have to do anything at all
-      if (command.equals("delete") && !keystore.containsKey(key)) {
-        return ("The key you entered does not exist!");
-      }
+      return ret;
 
-      // if we get here, all should be good, so lets try to make the 2 stage commit.
+    } else if (command.equals("upload") || command.equals("remove")) {
       System.out.println(date.format(new Date()) + ": begin_commit");
       messageAll("prepare");
+    } else if (command.equals("read")) {
+      return readFile(key);
     } else {
       return ("Invalid operation. Try again.");
     }
@@ -111,12 +135,13 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       // if we have all 4 ack messages, lets commit to our keystore
       if (acks >= 2) {
         String res = "no action taken.";
-        if (command.equals("put")) {
-          keystore.put(key, value);
-          res = "{" + key + ":" + value + "}" + " ADDED";
+        if (command.equals("upload")) {
+          // need to separate the filename and contents from the incoming client message
+          // for this function
+          // res = writeFile(fileName, contents);
         } else {
-          keystore.remove(key);
-          res = "{" + key + "}" + " DELETED";
+          // need to separate the filename from the message for this function
+          // res = deleteFile(fileName);
         }
         System.out.println(date.format(new Date()) + ": end_of_transaction");
         // reset state
@@ -130,11 +155,12 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
       return ("Aborted.");
     }
     return ("Something went wrong. Try again.");
+
   }
 
   /**
    * prepare rpc will check if we can enter a ready state to wait for a commit
-   * 
+   *
    * @param port integer port for the server requesting
    * @throws RemoteException if anything happens when trying to execute rpc
    */
@@ -167,14 +193,14 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   /**
    * commit rpc will attempt to make a commit against the local keystore and
    * respond with an ack message to the issuing server.
-   * 
+   *
    * @param port  requesting server port for response
    * @param cmd   a command message type for commit (put or delete)
    * @param key   key string for the keystore
    * @param value value string for the keystore
    * @throws RemoteException if anything happens when trying to execute rpc
    */
-  public void commit(int port, String cmd, String key, String value) {
+  public void commit(int port, String cmd, String fileName, String contents) {
     KeyStore access = null;
     try {
       access = (KeyStore) Naming.lookup("rmi://localhost:" + port + "/keystore" + port);
@@ -183,8 +209,12 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
     }
 
     if (port == promisedHost && commit || ready) {
-      if (cmd.toLowerCase().equals("put")) {
-        keystore.put(key, value);
+      if (cmd.toLowerCase().equals("upload")) {
+        // try to write to a file locally
+        String writeStatus = writeFile(fileName, contents);
+
+        // reply with ack to let the controling server know we finished our commit
+        // successfully
         if (ready) {
           try {
             access.reply("ack");
@@ -192,20 +222,29 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
             System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
           }
         }
-      } else if (cmd.toLowerCase().equals("delete")) {
-        keystore.remove(key);
-        if (ready) {
-          try {
-            access.reply("ack");
-          } catch (Exception e) {
-            System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
+      } else if (cmd.toLowerCase().equals("remove")) {
+        try {
+          String deleteRes = deleteFile(key);
+          System.out.println(date.format(new Date()) + deleteRes);
+
+          // reply with ack to let the controling server know we finished our commit
+          // successfully
+          if (ready) {
+            try {
+              access.reply("ack");
+            } catch (Exception e) {
+              System.err.println(date.format(new Date()) + ": Error connecting to rpc: " + e);
+            }
           }
+        } catch (Exception e) {
+          e.printStackTrace();
         }
       }
+
       System.out.println(date.format(new Date()) + ": commit recorded.");
       reset();
     } else {
-      System.out.println("Something went wrong.");
+      System.out.println(date.format(new Date()) + "Something went wrong.");
       abort();
     }
   }
@@ -213,7 +252,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   /**
    * reply rpc is a reply from slave servers to count and check whatever vote or
    * ack they submit
-   * 
+   *
    * @param type string for the kind of reply received
    * @throws RemoteException if anything happens when trying to execute rpc
    */
@@ -229,12 +268,61 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
 
   /**
    * abort method logs the event and initates the reset of state
-   * 
+   *
    * @throws RemoteException if anything happens when trying to execute rpc
    */
   public void abort() {
     System.out.println(date.format(new Date()) + ": aborting.");
     reset();
+  }
+
+  private String deleteFile(String fileName) {
+    String homeDir = System.getProperty("user.home");
+    File f = new File(homeDir + "/" + fileName);
+
+    if (f.delete()) {
+      return "deleted";
+    } else {
+      return "failed";
+    }
+  }
+
+  private String writeFile(String fileName, String contents) {
+    String res = "write failed";
+    try {
+      String homeDir = System.getProperty("user.home");
+      File f = new File(homeDir + "/" + key);
+      FileWriter fileWriter = new FileWriter(f);
+      PrintWriter printWriter = new PrintWriter(fileWriter);
+
+      printWriter.println(value);
+      printWriter.close();
+      res = "write successful";
+    } catch (IOException e) {
+      System.out.println(date.format(new Date()) + "IOException: " + e);
+    }
+    return res;
+  }
+
+  private String readFile(String fileName) {
+    String data = "error reading file";
+    try {
+      String homeDir = System.getProperty("user.home");
+
+      File myObj = new File(homeDir + "/" + fileName);
+
+      Scanner myReader = new Scanner(myObj);
+      // System.out.println("What is data");
+      while (myReader.hasNextLine()) {
+        data = myReader.nextLine();
+        System.out.println(data);
+      }
+      myReader.close();
+    } catch (FileNotFoundException e) {
+      System.out.println("An error occurred.");
+      e.printStackTrace();
+    }
+    return data;
   }
 
   /**
@@ -259,7 +347,7 @@ public class KeyStoreImpl extends UnicastRemoteObject implements KeyStore {
   /**
    * Sends a message to all servers for the two stage commit process; prepare,
    * commit, and abort
-   * 
+   *
    * @param type is the type of message to send
    * @throws RemoteException
    */

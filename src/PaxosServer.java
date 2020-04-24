@@ -4,7 +4,7 @@ import java.rmi.registry.LocateRegistry;
 /**
  * PaxosServer main runner class that will bind to a port and setup the server
  * implementation from the KeyStoreImpl class.
- * 
+ *
  * @author Neil Routley
  * @since 04/17/2020
  */
@@ -12,7 +12,7 @@ public class PaxosServer extends Thread {
 
   /**
    * Main method to start the server.
-   * 
+   *
    * @param args port numbers where the server(and its replicas) will be running
    */
   public static void main(String args[]) {

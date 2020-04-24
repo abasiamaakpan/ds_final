@@ -36,7 +36,7 @@ public class PaxosClient {
   static SimpleDateFormat date = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss:SSS");
 
   // file path for client directory. Could be user directory
- private static String filepath;
+  private static String filepath;
 
   /**
    * setup the RMI connections for all of the servers
@@ -143,11 +143,10 @@ public class PaxosClient {
     String currentDir = System.getProperty("user.dir");
     File tempDir = new File(currentDir+"/ClientFiles/");
     boolean exists = tempDir.exists();
-        if(!exists){
-          tempDir.mkdir();
-        }
-        filepath = currentDir+"/ClientFiles/";
-
+    if(!exists){
+      tempDir.mkdir();
+    }
+    filepath = currentDir+"/ClientFiles/";
   }
 
 
@@ -195,7 +194,7 @@ public class PaxosClient {
 
 
     try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-        new FileOutputStream(filepath+fileName+".txt"), "utf-8"))) {
+            new FileOutputStream(filepath+fileName+".txt"), "utf-8"))) {
       writer.write(sb.toString());
       res = "Successful!";
     } catch (IOException e) {

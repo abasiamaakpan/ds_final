@@ -1,5 +1,8 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.rmi.Naming;
 import java.rmi.registry.LocateRegistry;
+import java.util.Scanner;
 
 /**
  * PaxosServer main runner class that will bind to a port and setup the server
@@ -36,6 +39,26 @@ public class PaxosServer extends Thread {
     } catch (Exception e) {
       System.out.println("error in rpc server: " + e);
     }
+
+    String currentWorkingDir = System.getProperty("user.dir");
+    File tmpDir = new File(currentWorkingDir + "/ServerStorage" +serverArr[0]);
+    boolean exists = tmpDir.exists();
+    if (!exists) {
+      tmpDir.mkdir();
+    }
+
+    //else {
+      //exists = tmpDir.exists();
+      //System.out.println("Temp file exists : " + exists);
+    //}
+
+
   }
+  //exists = tmpDir.exists();
+  //else{
+
+  //}
+
+
 
 }

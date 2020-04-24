@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -155,6 +157,14 @@ public class PaxosClient {
       System.exit(1);
     }
 
+    String currentWorkingDir = System.getProperty("user.dir");
+    File tmpDir = new File(currentWorkingDir + "/clientFiles");
+    boolean exists = tmpDir.exists();
+    if (!exists) {
+      tmpDir.mkdir();
+    }
+    exists = tmpDir.exists();
+
     serverRpcArr = new KeyStore[serverArr.length];
     Scanner sc = new Scanner(System.in);
 
@@ -168,7 +178,20 @@ public class PaxosClient {
         String[] myArray = operation.trim().split(" ");
 
         String res = "";
-        if (myArray.length == 1 && myArray[0].toLowerCase().equals("list")) {
+        if (myArray.length == 2 && myArray[0].toLowerCase().equals("read")) {
+          try {
+            File myObj = new File(currentWorkingDir + "/clientFiles/" + myArray[1]);
+            Scanner myReader = new Scanner(myObj);
+            while (myReader.hasNextLine()) {
+              String data = myReader.nextLine();
+              System.out.println(data);
+            }
+            myReader.close();
+          } catch (FileNotFoundException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+          }
+        } else if (myArray.length == 1 && myArray[0].toLowerCase().equals("list")) {
           res = tryGet("list");
           // res = tryRmi(0, "list");
           System.out.println("Response" + res);
